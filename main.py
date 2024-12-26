@@ -46,7 +46,7 @@ points_text = FONT.render("Total points: ", 1, "white")
 play_again_text = FONT.render("Play again?", 1, "white")
 yes_text = FONT.render("Yes -> Press Enter", 1, "white")
 no_text = FONT.render("No -> Press Esc", 1, "white")
-pause_text = FONT.render("Pause - Press ESC to resume", 1, "white")
+pause_text = FONT.render("Pause - Press 'P' again or ESCAPE to resume game", 1, "white")
 one_text = FONT.render("1", 1, "white")
 two_text = FONT.render("2", 1, "white")
 three_text = FONT.render("3", 1, "white")
@@ -201,10 +201,10 @@ def main():
                     laser2 = pygame.Rect(player.x + SPACESHIP_WIDTH // 2 - LASER_WIDTH // 2 + 7, player.y, LASER_WIDTH, LASER_HEIGHT)
                     lasers.append(laser2)
                     last_shot_time = current_time
-        if keys[pygame.K_ESCAPE]:
+        if keys[pygame.K_ESCAPE] or keys[pygame.K_p]:
             pause = True
 
-        # Pause/unpause the game with ESC button
+        # Pause/unpause the game with "P" or ESC key
         if pause:
             WIN.blit(pause_text, (WIDTH / 2 - pause_text.get_width() / 2, HEIGHT / 2 - pause_text.get_height() / 2))
             pygame.display.update()
@@ -215,14 +215,14 @@ def main():
                         pause = False
                         break
 
-                    if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                    if event.type == pygame.KEYDOWN and (event.key == pygame.K_p or event.key == pygame.K_ESCAPE):
                         pause = False
                         for _, text in zip(range(3, 0, -1), [three_text, two_text, one_text]):
                             WIN.blit(BG, (0, 61))
                             WIN.blit(TOOLBAR, (0, 0))
                             draw(player, elapsed_time, missiles, lasers, live_hearts, hit, extra_points)
                             
-                            WIN.blit(text, (WIDTH / 2 - text.get_width() / 2, HEIGHT / 2 - text.get_height() / 2 + 50))
+                            WIN.blit(text, (WIDTH / 2 - text.get_width() / 2, HEIGHT / 2 - text.get_height() / 2))
                             pygame.display.update()
                             pygame.time.delay(1000)
                         break
