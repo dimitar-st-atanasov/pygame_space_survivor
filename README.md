@@ -21,7 +21,7 @@ Receiving points:
   - 5 points for each destroyed missile between 2nd and 4th minute of the game;
   - 25 points for each destroyed missile after the start of the 5th minute of the game;
 
-- Avoid hitting missiles with either moving the spaceship with left, right, up, down keys or with shooting lasers with spacebar key. If 15 missiles destroyed in combo (without loosing live) - spaceship will start shooting 2 lasers at the same time.
+- Avoid hitting missiles with either moving the spaceship with left, right, up, down keys or with shooting lasers with spacebar key. If 15 missiles destroyed in combo (without loosing live) - spaceship will start shooting 2 lasers at the same time. If 30 missiled destroyed in combo (without loosing live) - a shield will appear. It will disappear after a hit with a missile but you won't loose any lives and the ability to shoot with 2 lasers at the same time.
 
 - After every 60 seconds (1 minute) you receive a bonus live.
 

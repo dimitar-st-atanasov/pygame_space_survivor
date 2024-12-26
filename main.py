@@ -27,6 +27,8 @@ SPACESHIP_HEIGHT = 50
 # Load and scale spaceship
 SPACESHIP = pygame.transform.scale(pygame.image.load("resources/images/spaceship.png"), (SPACESHIP_WIDTH, SPACESHIP_HEIGHT))
 
+SHIELD = pygame.transform.scale(pygame.image.load("resources/images/shield.png"), (SPACESHIP_WIDTH, SPACESHIP_HEIGHT))
+
 PLAYER_VEL = 5
 MISSILE_VEL = 5
 LASER_VEL = 10
@@ -51,7 +53,7 @@ one_text = FONT.render("1", 1, "white")
 two_text = FONT.render("2", 1, "white")
 three_text = FONT.render("3", 1, "white")
 
-def draw(player, elapsed_time, missiles, lasers, live_hearts, hit, extra_points):
+def draw(player, elapsed_time, missiles, lasers, live_hearts, hit, extra_points, shield_enabled):
 
     # Render and display background and toolbar
     WIN.blit(TOOLBAR, (0, 0))
@@ -89,6 +91,9 @@ def draw(player, elapsed_time, missiles, lasers, live_hearts, hit, extra_points)
     # Render and display spaceship at the player's position
     WIN.blit(SPACESHIP, (player.x, player.y))
     # pygame.draw.rect(WIN, (255, 0, 0), player, 2) # for debugging
+
+    if shield_enabled:
+        WIN.blit(SHIELD, (player.x, player.y))
 
     pygame.display.update()
 
@@ -151,6 +156,7 @@ def main():
     hit = False
     helper = False
     combo_missile_destroyed = 0
+    shield_enabled = False
 
     while run:
         missile_count += clock.tick(60)
@@ -194,7 +200,7 @@ def main():
                 if len(lasers) <= 0:
                     laser = pygame.Rect(player.x + SPACESHIP_WIDTH // 2 - LASER_WIDTH // 2, player.y, LASER_WIDTH, LASER_HEIGHT)
                     lasers.append(laser)
-            if len(extra_points) >= 15 and int(current_time) - int(last_shot_time) >= 0.4 and helper == True:
+            if helper == True and int(current_time) - int(last_shot_time) >= 0.4:
                 if len(lasers) <= 1:
                     laser1 = pygame.Rect(player.x + SPACESHIP_WIDTH // 2 - LASER_WIDTH // 2 - 7, player.y, LASER_WIDTH, LASER_HEIGHT)
                     lasers.append(laser1)
@@ -235,12 +241,15 @@ def main():
             elif missile.x + missile.width > WIDTH:
                 missile.x = WIDTH - missile.width
             elif missile.y + missile.height >= player.y and missile.colliderect(player):
+                if shield_enabled:
+                    shield_enabled = False
+                else:
+                    live_hearts -= 1
+                    helper = False
+                    hit = True
+                    current_hit_time = time.time()
                 missiles.remove(missile)
-                hit = True
-                live_hearts -= 1
-                helper = False
                 combo_missile_destroyed = 0
-                current_hit_time = time.time()
                 count_destroyed_missiles(last_minute, extra_points)
                 break
 
@@ -265,6 +274,8 @@ def main():
                         combo_missile_destroyed += 1
                         if combo_missile_destroyed >= 15:
                             helper = True
+                        if combo_missile_destroyed >= 30:
+                            shield_enabled = True
                     except ValueError:
                         pass
 
@@ -331,7 +342,7 @@ def main():
                 run = False
                 break
 
-        draw(player, elapsed_time, missiles, lasers, live_hearts, hit, extra_points)
+        draw(player, elapsed_time, missiles, lasers, live_hearts, hit, extra_points, shield_enabled)
 
     pygame.quit()
 
