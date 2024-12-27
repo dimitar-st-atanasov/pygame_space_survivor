@@ -62,8 +62,8 @@ def draw(player, elapsed_time, missiles, lasers, live_hearts, hit, extra_points,
 
     # FIXME If decided to return the text of remaining lives
     # Render and display remaining lives text
-    # show_hits = FONT.render(f"Remaining lives:", 1, "white")
-    # WIN.blit(show_hits, (25, 8))
+    # remaining_lives_text = FONT.render(f"Remaining lives:", 1, "white")
+    # WIN.blit(remaining_lives_text, (25, 8))
 
     # Render and display destroyed missiles number
     show_destroyed_missiles = FONT.render(f"Destroyed missiles: {len(extra_points)}", 1, "white")
