@@ -32,6 +32,7 @@ SHIELD = pygame.transform.scale(pygame.image.load("resources/images/shield.png")
 PLAYER_VEL = 5
 MISSILE_VEL = 5
 LASER_VEL = 10
+EXTRA_LIVE_HEART_VEL = 3
 
 MISSILE_WIDTH = 20
 MISSILE_HEIGHT = 45
@@ -53,15 +54,16 @@ one_text = FONT.render("1", 1, "white")
 two_text = FONT.render("2", 1, "white")
 three_text = FONT.render("3", 1, "white")
 
-def draw(player, elapsed_time, missiles, lasers, live_hearts, hit, extra_points, shield_enabled):
+def draw(player, elapsed_time, missiles, lasers, live_hearts, hit, extra_points, shield_enabled, extra_live_hearts):
 
     # Render and display background and toolbar
     WIN.blit(TOOLBAR, (0, 0))
     WIN.blit(BG, (0, 61))
 
+    # FIXME If decided to return the text of remaining lives
     # Render and display remaining lives text
-    show_hits = FONT.render(f"Remaining lives:", 1, "white")
-    WIN.blit(show_hits, (25, 8))
+    # show_hits = FONT.render(f"Remaining lives:", 1, "white")
+    # WIN.blit(show_hits, (25, 8))
 
     # Render and display destroyed missiles number
     show_destroyed_missiles = FONT.render(f"Destroyed missiles: {len(extra_points)}", 1, "white")
@@ -69,7 +71,9 @@ def draw(player, elapsed_time, missiles, lasers, live_hearts, hit, extra_points,
 
     # Render and display live hearts
     for i in range(live_hearts):
-        WIN.blit(LIVE_HEART, (210 + i * 40, 10))
+        # FIXME If decided to return the text of remaining lives
+        # WIN.blit(LIVE_HEART, (210 + i * 40, 10))
+        WIN.blit(LIVE_HEART, (23 + i * 40, 13))
 
     # Render and display elapsed time
     time_text = FONT.render(f"Time: {round(elapsed_time)}s", 1, "white")
@@ -94,6 +98,10 @@ def draw(player, elapsed_time, missiles, lasers, live_hearts, hit, extra_points,
 
     if shield_enabled:
         WIN.blit(SHIELD, (player.x, player.y))
+
+    for extra_live_heart in extra_live_hearts:
+        WIN.blit(LIVE_HEART, (extra_live_heart.x, extra_live_heart.y))
+        WIN.blit(SHIELD, (extra_live_heart.x - 4, extra_live_heart.y - 8))
 
     pygame.display.update()
 
@@ -139,6 +147,8 @@ def main():
     # FIXME The time to show minutes and seconds. Not only seconds
     start_time = time.time()
     elapsed_time = 0
+    paused_time = 0
+    pause_start = None
 
     missile_add_increment = 2000 # Starting respawn time gap of falling missiles
     missile_count = 0
@@ -157,10 +167,12 @@ def main():
     helper = False
     combo_missile_destroyed = 0
     shield_enabled = False
+    extra_live_heart_enabled = False
+    extra_live_hearts = []
 
     while run:
         missile_count += clock.tick(60)
-        elapsed_time = time.time() - start_time
+        elapsed_time = time.time() - start_time - paused_time
 
         # Earn extra lives
         current_minute = int(elapsed_time // 60)  # Convert elapsed time to full minutes
@@ -196,7 +208,7 @@ def main():
             player.y += PLAYER_VEL
         if keys[pygame.K_SPACE]:
             current_time = time.time()
-            if len(extra_points) < 15 or helper == False:
+            if helper == False:
                 if len(lasers) <= 0:
                     laser = pygame.Rect(player.x + SPACESHIP_WIDTH // 2 - LASER_WIDTH // 2, player.y, LASER_WIDTH, LASER_HEIGHT)
                     lasers.append(laser)
@@ -212,6 +224,7 @@ def main():
 
         # Pause/unpause the game with "P" or ESC key
         if pause:
+            pause_start = time.time()
             WIN.blit(pause_text, (WIDTH / 2 - pause_text.get_width() / 2, HEIGHT / 2 - pause_text.get_height() / 2))
             pygame.display.update()
             while pause:
@@ -226,11 +239,12 @@ def main():
                         for _, text in zip(range(3, 0, -1), [three_text, two_text, one_text]):
                             WIN.blit(BG, (0, 61))
                             WIN.blit(TOOLBAR, (0, 0))
-                            draw(player, elapsed_time, missiles, lasers, live_hearts, hit, extra_points)
+                            draw(player, elapsed_time, missiles, lasers, live_hearts, hit, extra_points, shield_enabled, extra_live_hearts)
                             
                             WIN.blit(text, (WIDTH / 2 - text.get_width() / 2, HEIGHT / 2 - text.get_height() / 2))
                             pygame.display.update()
                             pygame.time.delay(1000)
+                        paused_time += time.time() - pause_start
                         break
         
         # Generate falling missiles and remove them if hit spaceship
@@ -276,6 +290,9 @@ def main():
                             helper = True
                         if combo_missile_destroyed >= 30:
                             shield_enabled = True
+                        if combo_missile_destroyed == 50:
+                            extra_live_heart_enabled = True
+
                     except ValueError:
                         pass
 
@@ -285,7 +302,24 @@ def main():
                         except ValueError:
                             pass
                     break
-        
+
+        if extra_live_heart_enabled:
+            extra_live_heart_x = random.randint(0, WIDTH - LIVE_HEART_WIDTH)
+            extra_live_heart = pygame.Rect(extra_live_heart_x, 60, LIVE_HEART_WIDTH, LIVE_HEART_HEIGHT)
+            extra_live_hearts.append(extra_live_heart)
+
+        for extra_live_heart in extra_live_hearts[:]:
+            extra_live_heart.y += EXTRA_LIVE_HEART_VEL
+            if extra_live_heart.y > HEIGHT:
+                extra_live_hearts.remove(extra_live_heart)
+            if extra_live_heart.x + extra_live_heart.width > WIDTH:
+                extra_live_heart.x = WIDTH - extra_live_heart.width
+            if player.colliderect(extra_live_heart):
+                extra_live_hearts.remove(extra_live_heart)
+                if live_hearts < 5:
+                    live_hearts += 1
+            extra_live_heart_enabled = False
+
         # Game Over
         if live_hearts == 0:
             draw_last_hit(player, elapsed_time, live_hearts, extra_points)
@@ -342,7 +376,7 @@ def main():
                 run = False
                 break
 
-        draw(player, elapsed_time, missiles, lasers, live_hearts, hit, extra_points, shield_enabled)
+        draw(player, elapsed_time, missiles, lasers, live_hearts, hit, extra_points, shield_enabled, extra_live_hearts)
 
     pygame.quit()
 
