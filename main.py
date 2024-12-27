@@ -54,25 +54,28 @@ one_text = FONT.render("1", 1, "white")
 two_text = FONT.render("2", 1, "white")
 three_text = FONT.render("3", 1, "white")
 
-def draw(player, elapsed_time, missiles, lasers, live_hearts, hit, extra_points, shield_enabled, extra_live_hearts):
+def draw(player, elapsed_time, missiles, lasers, live_hearts, hit, combo_missile_destroyed, shield_enabled, extra_live_hearts):
 
     # Render and display background and toolbar
     WIN.blit(TOOLBAR, (0, 0))
     WIN.blit(BG, (0, 61))
 
-    # FIXME If decided to return the text of remaining lives
-    # Render and display remaining lives text
-    # remaining_lives_text = FONT.render(f"Remaining lives:", 1, "white")
-    # WIN.blit(remaining_lives_text, (25, 8))
-
     # Render and display destroyed missiles number
-    show_destroyed_missiles = FONT.render(f"Destroyed missiles: {len(extra_points)}", 1, "white")
-    WIN.blit(show_destroyed_missiles, (700, 8))
+    if combo_missile_destroyed < 15:
+        show_destroyed_missiles_number_text = FONT.render(f"{combo_missile_destroyed}", 1, "white")
+    elif combo_missile_destroyed >= 15 and combo_missile_destroyed < 30:
+        show_destroyed_missiles_number_text = FONT.render(f"{combo_missile_destroyed}", 1, "yellow")
+    elif combo_missile_destroyed >= 30 and combo_missile_destroyed < 50:
+        show_destroyed_missiles_number_text = FONT.render(f"{combo_missile_destroyed}", 1, "light blue")
+    elif combo_missile_destroyed >= 50:
+        show_destroyed_missiles_number_text = FONT.render(f"{combo_missile_destroyed}", 1, "green")   
+    
+    show_destroyed_missiles_text = FONT.render(f"Combo:", 1, "white")
+    WIN.blit(show_destroyed_missiles_text, (830, 10))
+    WIN.blit(show_destroyed_missiles_number_text, (920, 10))
 
     # Render and display live hearts
     for i in range(live_hearts):
-        # FIXME If decided to return the text of remaining lives
-        # WIN.blit(LIVE_HEART, (210 + i * 40, 10))
         WIN.blit(LIVE_HEART, (23 + i * 40, 13))
 
     # Render and display elapsed time
@@ -239,7 +242,7 @@ def main():
                         for _, text in zip(range(3, 0, -1), [three_text, two_text, one_text]):
                             WIN.blit(BG, (0, 61))
                             WIN.blit(TOOLBAR, (0, 0))
-                            draw(player, elapsed_time, missiles, lasers, live_hearts, hit, extra_points, shield_enabled, extra_live_hearts)
+                            draw(player, elapsed_time, missiles, lasers, live_hearts, hit, combo_missile_destroyed, shield_enabled, extra_live_hearts)
                             
                             WIN.blit(text, (WIDTH / 2 - text.get_width() / 2, HEIGHT / 2 - text.get_height() / 2))
                             pygame.display.update()
@@ -338,7 +341,7 @@ def main():
                 total_points_text = FONT.render(f"Total points: {total_extra_points}", 1, "white")
                 WIN.blit(total_points_text, (WIDTH / 2 - len(str(total_extra_points)) * 10 - points_text.get_width() / 2, HEIGHT / 2 - points_text.get_height() / 2))
                 pygame.display.update()
-                pygame.time.delay(20)
+                pygame.time.delay(10)
 
             # raise smoothly whole text with 100 pixels
             up_rising = 0
@@ -376,7 +379,7 @@ def main():
                 run = False
                 break
 
-        draw(player, elapsed_time, missiles, lasers, live_hearts, hit, extra_points, shield_enabled, extra_live_hearts)
+        draw(player, elapsed_time, missiles, lasers, live_hearts, hit, combo_missile_destroyed, shield_enabled, extra_live_hearts)
 
     pygame.quit()
 
