@@ -149,6 +149,7 @@ def count_destroyed_missiles(last_minute, extra_points):
         extra_points.append("25")
 
 def main():
+    global MISSILE_VEL
 
     run = True
 
@@ -180,6 +181,8 @@ def main():
     shield_enabled = False
     extra_live_heart_enabled = False
     extra_live_hearts = []
+
+    last_minute_increment = 0
 
     while run:
         missile_count += clock.tick(60)
@@ -223,7 +226,7 @@ def main():
                 if len(lasers) <= 0:
                     laser = pygame.Rect(player.x + SPACESHIP_WIDTH // 2 - LASER_WIDTH // 2, player.y, LASER_WIDTH, LASER_HEIGHT)
                     lasers.append(laser)
-            if helper == True and int(current_time) - int(last_shot_time) >= 0.4:
+            if helper == True and int(current_time) - int(last_shot_time) >= 0.3:
                 if len(lasers) <= 1:
                     laser1 = pygame.Rect(player.x + SPACESHIP_WIDTH // 2 - LASER_WIDTH // 2 - 7, player.y, LASER_WIDTH, LASER_HEIGHT)
                     lasers.append(laser1)
@@ -260,6 +263,9 @@ def main():
         
         # Generate falling missiles and remove them if hit spaceship
         for missile in missiles[:]:
+            if current_minute > last_minute_increment:
+                MISSILE_VEL += 1
+                last_minute_increment = current_minute
             missile.y += MISSILE_VEL
             if missile.y > HEIGHT:
                 missiles.remove(missile)
