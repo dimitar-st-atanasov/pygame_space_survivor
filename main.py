@@ -28,6 +28,7 @@ SPACESHIP_HEIGHT = 50
 SPACESHIP = pygame.transform.scale(pygame.image.load("resources/images/spaceship.png"), (SPACESHIP_WIDTH, SPACESHIP_HEIGHT))
 
 SHIELD = pygame.transform.scale(pygame.image.load("resources/images/shield.png"), (SPACESHIP_WIDTH, SPACESHIP_HEIGHT))
+SHIELD_HUNDRED_POINTS = pygame.transform.scale(pygame.image.load("resources/images/shield.png"), (50, 50))
 
 PLAYER_VEL = 5
 MISSILE_VEL = 5
@@ -103,8 +104,15 @@ def draw(player, elapsed_time, missiles, lasers, live_hearts, hit, combo_missile
         WIN.blit(SHIELD, (player.x, player.y))
 
     for extra_live_heart in extra_live_hearts:
-        WIN.blit(LIVE_HEART, (extra_live_heart.x, extra_live_heart.y))
-        WIN.blit(SHIELD, (extra_live_heart.x - 4, extra_live_heart.y - 8))
+        if live_hearts < 5:
+            WIN.blit(LIVE_HEART, (extra_live_heart.x, extra_live_heart.y))
+            WIN.blit(SHIELD, (extra_live_heart.x - 4, extra_live_heart.y - 8))
+        else:
+            hundred_points_text = FONT.render("100", 1, "white")
+            text_rect = hundred_points_text.get_rect()
+            text_rect.topleft = (extra_live_heart.x, extra_live_heart.y)
+            WIN.blit(hundred_points_text, text_rect.topleft)
+            WIN.blit(SHIELD_HUNDRED_POINTS, (extra_live_heart.x - 5, extra_live_heart.y - 6))
 
     pygame.display.update()
 
@@ -266,7 +274,7 @@ def main():
                     hit = True
                     current_hit_time = time.time()
                 missiles.remove(missile)
-                combo_missile_destroyed = 0
+                combo_missile_destroyed = 1
                 count_destroyed_missiles(last_minute, extra_points)
                 break
 
@@ -293,7 +301,7 @@ def main():
                             helper = True
                         if combo_missile_destroyed >= 30:
                             shield_enabled = True
-                        if combo_missile_destroyed == 50:
+                        if combo_missile_destroyed % 50 == 0 and combo_missile_destroyed > 0:
                             extra_live_heart_enabled = True
 
                     except ValueError:
@@ -321,6 +329,7 @@ def main():
                 extra_live_hearts.remove(extra_live_heart)
                 if live_hearts < 5:
                     live_hearts += 1
+                extra_points.append("100")
             extra_live_heart_enabled = False
 
         # Game Over
