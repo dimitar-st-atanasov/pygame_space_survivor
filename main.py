@@ -31,7 +31,7 @@ SHIELD = pygame.transform.scale(pygame.image.load("resources/images/shield.png")
 SHIELD_HUNDRED_POINTS = pygame.transform.scale(pygame.image.load("resources/images/shield.png"), (50, 50))
 
 PLAYER_VEL = 5
-MISSILE_VEL = 5
+MISSILE_VEL = 4
 LASER_VEL = 10
 EXTRA_LIVE_HEART_VEL = 3
 
@@ -50,7 +50,7 @@ points_text = FONT.render("Total points: ", 1, "white")
 play_again_text = FONT.render("Play again?", 1, "white")
 yes_text = FONT.render("Yes -> Press Enter", 1, "white")
 no_text = FONT.render("No -> Press Esc", 1, "white")
-pause_text = FONT.render("Pause - Press 'P' again or ESCAPE to resume game", 1, "white")
+pause_text = FONT.render("Pause -> Press 'P' or Esc to resume the game", 1, "white")
 one_text = FONT.render("1", 1, "white")
 two_text = FONT.render("2", 1, "white")
 three_text = FONT.render("3", 1, "white")
@@ -182,7 +182,7 @@ def main():
     extra_live_heart_enabled = False
     extra_live_hearts = []
 
-    last_minute_increment = 0
+    last_minute_increment = 2
 
     while run:
         missile_count += clock.tick(60)
@@ -357,6 +357,9 @@ def main():
                 WIN.blit(total_points_text, (WIDTH / 2 - len(str(total_extra_points)) * 10 - points_text.get_width() / 2, HEIGHT / 2 - points_text.get_height() / 2))
                 pygame.display.update()
                 pygame.time.delay(10)
+            
+            # Clear the event queue before waiting for user input
+            pygame.event.get()
 
             # raise smoothly whole text with 100 pixels
             up_rising = 0
@@ -386,7 +389,7 @@ def main():
                         elif event.key == pygame.K_ESCAPE:
                             given_answer = True
                             pygame.quit()
-                            exit() 
+                            exit()
 
         # Exit game with "x" icon
         for event in pygame.event.get():
