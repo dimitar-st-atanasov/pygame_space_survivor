@@ -95,13 +95,13 @@ shoot_single_sound.set_volume(0.2)
 shoot_double_sound.set_volume(0.2)
 destroy_missile_sound.set_volume(1.0)
 getting_hit_sound.set_volume(1.0)
-collect_heart_sound.set_volume(1.0)
-activate_shield_sound.set_volume(0.8)
+collect_heart_sound.set_volume(0.8)
+activate_shield_sound.set_volume(0.6)
 deactivate_shield_sound.set_volume(1.0)
 countdown_sound.set_volume(1.0)
 collect_points_sound.set_volume(0.7)
 game_over_sound.set_volume(1.0)
-upgrade_sound.set_volume(1.0)
+upgrade_sound.set_volume(0.8)
 generate_heart_sound.set_volume(0.7)
 menu_song.set_volume(1.0)
 
@@ -227,7 +227,6 @@ def main():
     shield_enabled = False
     extra_life_heart_enabled = False
     extra_life_hearts = []
-    upgrade_enabled = False
 
     last_minute_increment = 1
 
@@ -377,12 +376,10 @@ def main():
                         missiles.remove(missile)
                         DESTROY_MISSILE_CHANNEL.play(destroy_missile_sound)
                         combo_missile_destroyed += 1
+                        if combo_missile_destroyed == 15 and not helper:
+                            UPGRADE_CHANNEL.play(upgrade_sound)
                         if combo_missile_destroyed >= 15:
                             helper = True
-                            upgrade_enabled = True
-                        if combo_missile_destroyed == 15 and upgrade_enabled:
-                            upgrade_enabled = False
-                            UPGRADE_CHANNEL.play(upgrade_sound)
                         if combo_missile_destroyed >= 30:
                             if not shield_enabled:
                                 shield_enabled = True
