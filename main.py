@@ -14,9 +14,9 @@ pygame.display.set_caption("Space Survivor")
 BG = pygame.transform.scale(pygame.image.load("resources/images/space_background.jpg"), (WIDTH, HEIGHT - 60))
 TOOLBAR = pygame.transform.scale(pygame.image.load("resources/images/toolbar.png"), (WIDTH, HEIGHT - 740))
 
-LIVE_HEART_WIDTH = 30
-LIVE_HEART_HEIGHT = 35
-LIVE_HEART = pygame.transform.scale(pygame.image.load("resources/images/lives.png"), (LIVE_HEART_WIDTH, LIVE_HEART_HEIGHT))
+LIFE_HEART_WIDTH = 30
+LIFE_HEART_HEIGHT = 35
+LIFE_HEART = pygame.transform.scale(pygame.image.load("resources/images/lifes.png"), (LIFE_HEART_WIDTH, LIFE_HEART_HEIGHT))
 
 HIT_WIDTH = 35
 HIT_HEIGHT = 45
@@ -35,7 +35,7 @@ SHIELD_HUNDRED_POINTS = pygame.transform.scale(pygame.image.load("resources/imag
 PLAYER_VEL = 5
 MISSILE_VEL = 4
 LASER_VEL = 15
-EXTRA_LIVE_HEART_VEL = 3
+EXTRA_LIFE_HEART_VEL = 3
 
 MISSILE_WIDTH = 20
 MISSILE_HEIGHT = 45
@@ -106,7 +106,7 @@ generate_heart_sound.set_volume(0.7)
 menu_song.set_volume(1.0)
 
 
-def draw(player, elapsed_time, missiles, lasers, live_hearts, hit, combo_missile_destroyed, shield_enabled, extra_live_hearts):
+def draw(player, elapsed_time, missiles, lasers, life_hearts, hit, combo_missile_destroyed, shield_enabled, extra_life_hearts):
 
     # Render and display background and toolbar
     WIN.blit(TOOLBAR, (0, 0))
@@ -126,9 +126,9 @@ def draw(player, elapsed_time, missiles, lasers, live_hearts, hit, combo_missile
     WIN.blit(show_destroyed_missiles_text, (810, 15))
     WIN.blit(show_destroyed_missiles_number_text, (900, 15))
 
-    # Render and display live hearts
-    for i in range(live_hearts):
-        WIN.blit(LIVE_HEART, (23 + i * 40, 13))
+    # Render and display life hearts
+    for i in range(life_hearts):
+        WIN.blit(LIFE_HEART, (23 + i * 40, 13))
 
     # Render and display elapsed time
     time_text = FONT.render(f"Time: {round(elapsed_time)}s", 1, "white")
@@ -154,16 +154,16 @@ def draw(player, elapsed_time, missiles, lasers, live_hearts, hit, combo_missile
     if shield_enabled:
         WIN.blit(SHIELD, (player.x, player.y))
 
-    for extra_live_heart in extra_live_hearts:
-        if live_hearts < 5:
-            WIN.blit(LIVE_HEART, (extra_live_heart.x, extra_live_heart.y))
-            WIN.blit(SHIELD, (extra_live_heart.x - 4, extra_live_heart.y - 8))
+    for extra_life_heart in extra_life_hearts:
+        if life_hearts < 5:
+            WIN.blit(LIFE_HEART, (extra_life_heart.x, extra_life_heart.y))
+            WIN.blit(SHIELD, (extra_life_heart.x - 4, extra_life_heart.y - 8))
         else:
             hundred_points_text = FONT.render("100", 1, "white")
             text_rect = hundred_points_text.get_rect()
-            text_rect.topleft = (extra_live_heart.x, extra_live_heart.y)
+            text_rect.topleft = (extra_life_heart.x, extra_life_heart.y)
             WIN.blit(hundred_points_text, text_rect.topleft)
-            WIN.blit(SHIELD_HUNDRED_POINTS, (extra_live_heart.x - 5, extra_live_heart.y - 6))
+            WIN.blit(SHIELD_HUNDRED_POINTS, (extra_life_heart.x - 5, extra_life_heart.y - 6))
 
     pygame.display.update()
 
@@ -192,7 +192,7 @@ def count_destroyed_missiles(last_minute, extra_points):
         extra_points.append("25")
 
 def main():
-    
+
     global MISSILE_VEL
 
     run = True
@@ -212,7 +212,7 @@ def main():
 
     lasers = []
     missiles = []
-    live_hearts = 3
+    life_hearts = 3
     last_minute = 0
     extra_points = []
     total_extra_points = 0
@@ -224,8 +224,8 @@ def main():
     helper = False
     combo_missile_destroyed = 0
     shield_enabled = False
-    extra_live_heart_enabled = False
-    extra_live_hearts = []
+    extra_life_heart_enabled = False
+    extra_life_hearts = []
     upgrade_enabled = False
 
     last_minute_increment = 1
@@ -234,11 +234,11 @@ def main():
         missile_count += clock.tick(60)
         elapsed_time = time.time() - start_time - paused_time
 
-        # Earn extra lives
+        # Earn extra lifes
         current_minute = int(elapsed_time // 60)  # Convert elapsed time to full minutes
         if current_minute > last_minute:
-            if live_hearts < 5:
-                live_hearts += 1
+            if life_hearts < 5:
+                life_hearts += 1
             last_minute = current_minute
 
         if missile_count > missile_add_increment:
@@ -320,7 +320,7 @@ def main():
                             COUNTDOWN_CHANNEL.play(countdown_sound)
                             WIN.blit(BG, (0, 61))
                             WIN.blit(TOOLBAR, (0, 0))
-                            draw(player, elapsed_time, missiles, lasers, live_hearts, hit, combo_missile_destroyed, shield_enabled, extra_live_hearts)
+                            draw(player, elapsed_time, missiles, lasers, life_hearts, hit, combo_missile_destroyed, shield_enabled, extra_life_hearts)
                             
                             WIN.blit(text, (WIDTH / 2 - text.get_width() / 2, HEIGHT / 2 - text.get_height() / 2))
                             pygame.display.update()
@@ -344,7 +344,7 @@ def main():
                     DEACTIVATE_SHIELD_CHANNEL.play(deactivate_shield_sound)
                 else:
                     GETTING_HIT_CHANNEL.play(getting_hit_sound)
-                    live_hearts -= 1
+                    life_hearts -= 1
                     helper = False
                     hit = True
                     current_hit_time = time.time()
@@ -384,7 +384,7 @@ def main():
                                 shield_enabled = True
                                 ACTIVATE_SHIELD_CHANNEL.play(activate_shield_sound)
                         if combo_missile_destroyed % 50 == 0 and combo_missile_destroyed > 0:
-                            extra_live_heart_enabled = True
+                            extra_life_heart_enabled = True
                             GENERATE_HEART_CHANNEL.play(generate_heart_sound)
 
                     except ValueError:
@@ -397,27 +397,27 @@ def main():
                             pass
                     break
 
-        if extra_live_heart_enabled:
-            extra_live_heart_x = random.randint(0, WIDTH - LIVE_HEART_WIDTH)
-            extra_live_heart = pygame.Rect(extra_live_heart_x, 60, LIVE_HEART_WIDTH, LIVE_HEART_HEIGHT)
-            extra_live_hearts.append(extra_live_heart)
+        if extra_life_heart_enabled:
+            extra_life_heart_x = random.randint(0, WIDTH - LIFE_HEART_WIDTH)
+            extra_life_heart = pygame.Rect(extra_life_heart_x, 60, LIFE_HEART_WIDTH, LIFE_HEART_HEIGHT)
+            extra_life_hearts.append(extra_life_heart)
 
-        for extra_live_heart in extra_live_hearts[:]:
-            extra_live_heart.y += EXTRA_LIVE_HEART_VEL
-            if extra_live_heart.y > HEIGHT:
-                extra_live_hearts.remove(extra_live_heart)
-            if extra_live_heart.x + extra_live_heart.width > WIDTH:
-                extra_live_heart.x = WIDTH - extra_live_heart.width
-            if player.colliderect(extra_live_heart):
-                extra_live_hearts.remove(extra_live_heart)
+        for extra_life_heart in extra_life_hearts[:]:
+            extra_life_heart.y += EXTRA_LIFE_HEART_VEL
+            if extra_life_heart.y > HEIGHT:
+                extra_life_hearts.remove(extra_life_heart)
+            if extra_life_heart.x + extra_life_heart.width > WIDTH:
+                extra_life_heart.x = WIDTH - extra_life_heart.width
+            if player.colliderect(extra_life_heart):
+                extra_life_hearts.remove(extra_life_heart)
                 COLLECT_HEART_CHANNEL.play(collect_heart_sound)
-                if live_hearts < 5:
-                    live_hearts += 1
+                if life_hearts < 5:
+                    life_hearts += 1
                 extra_points.append("100")
-            extra_live_heart_enabled = False
+            extra_life_heart_enabled = False
 
         # Game Over
-        if live_hearts == 0:
+        if life_hearts == 0:
             pygame.time.delay(100)
             draw_last_hit(player, elapsed_time)
             WIN.blit(lost_text, (WIDTH/2 - lost_text.get_width()/2, HEIGHT/2 - lost_text.get_height()/2))
@@ -480,7 +480,7 @@ def main():
                 run = False
                 break
 
-        draw(player, elapsed_time, missiles, lasers, live_hearts, hit, combo_missile_destroyed, shield_enabled, extra_live_hearts)
+        draw(player, elapsed_time, missiles, lasers, life_hearts, hit, combo_missile_destroyed, shield_enabled, extra_life_hearts)
 
     pygame.quit()
 
