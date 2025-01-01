@@ -218,6 +218,7 @@ def main():
     total_extra_points = 0
 
     last_shot_time = 0
+    last_crash_time = 0
 
     current_hit_time = 0
     hit = False
@@ -339,19 +340,22 @@ def main():
             elif missile.x + missile.width > WIDTH:
                 missile.x = WIDTH - missile.width
             elif missile.y + missile.height >= player.y and missile.colliderect(player):
-                if shield_enabled:
-                    shield_enabled = False
-                    DEACTIVATE_SHIELD_CHANNEL.play(deactivate_shield_sound)
-                else:
-                    GETTING_HIT_CHANNEL.play(getting_hit_sound)
-                    life_hearts -= 1
-                    helper = False
-                    hit = True
-                    current_hit_time = time.time()
-                missiles.remove(missile)
-                combo_missile_destroyed = 1
-                count_destroyed_missiles(last_minute, extra_points)
-                break
+                current_crash_time = time.time()
+                if current_crash_time - last_crash_time >= 1.5:
+                    if shield_enabled:
+                        shield_enabled = False
+                        DEACTIVATE_SHIELD_CHANNEL.play(deactivate_shield_sound)
+                    else:
+                        GETTING_HIT_CHANNEL.play(getting_hit_sound)
+                        life_hearts -= 1
+                        helper = False
+                        hit = True
+                        current_hit_time = time.time()
+                    missiles.remove(missile)
+                    combo_missile_destroyed = 1
+                    count_destroyed_missiles(last_minute, extra_points)
+                    last_crash_time = current_crash_time
+                    break
 
         if hit:
             if time.time() - current_hit_time >= 0.5:  # remove hit image after half a second after a hit
