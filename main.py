@@ -33,6 +33,7 @@ SHIELD = pygame.transform.scale(pygame.image.load("resources/images/shield.png")
 SHIELD_HUNDRED_POINTS = pygame.transform.scale(pygame.image.load("resources/images/shield.png"), (50, 50))
 
 PLAYER_VEL = 5
+ASTEROID_VEL = 1
 MISSILE_VEL = 4
 LASER_VEL = 15
 EXTRA_LIFE_HEART_VEL = 3
@@ -40,6 +41,10 @@ EXTRA_LIFE_HEART_VEL = 3
 MISSILE_WIDTH = 20
 MISSILE_HEIGHT = 45
 MISSILE = pygame.transform.scale(pygame.image.load("resources/images/missile.png"), (MISSILE_WIDTH, MISSILE_HEIGHT))
+
+ASTEROID_WIDTH = 120
+ASTEROID_HEIGHT = 120
+ASTEROID = pygame.transform.scale(pygame.image.load("resources/images/asteroid.png"), (ASTEROID_WIDTH, ASTEROID_HEIGHT))
 
 LASER_WIDTH = 2
 LASER_HEIGHT = 20
@@ -74,6 +79,7 @@ GAME_OVER_CHANNEL = pygame.mixer.Channel(9)
 UPGRADE_CHANNEL = pygame.mixer.Channel(10)
 GENERATE_HEART_CHANNEL = pygame.mixer.Channel(10)
 MENU_SONG_CHANNEL = pygame.mixer.Channel(11)
+DESTROY_ASTEROID_CHANNEL = pygame.mixer.Channel(12)
 
 # Load Sounds
 shoot_single_sound = pygame.mixer.Sound("resources/sounds/shoot_single.mp3")
@@ -106,11 +112,24 @@ generate_heart_sound.set_volume(0.7)
 menu_song.set_volume(1.0)
 
 
-def draw(player, elapsed_time, missiles, lasers, life_hearts, hit, combo_missile_destroyed, shield_enabled, extra_life_hearts):
+def draw(player, elapsed_time, asteroids, missiles, lasers, life_hearts, hit, combo_missile_destroyed, shield_enabled, extra_life_hearts):
 
-    # Render and display background and toolbar
+    # Render and display background
+    WIN.blit(BG, (0, TOOLBAR.get_height()))
+
+    # Render and display the falling missiles
+    for missile in missiles:
+        WIN.blit(MISSILE, (missile.x, missile.y))
+        # pygame.draw.rect(WIN, (255, 0, 0), missile, 2) # for debugging
+
+    # Render and display the falling asteroids
+    for asteroid in asteroids:
+        rect, hp = asteroid
+        WIN.blit(ASTEROID, (rect.x, rect.y))
+        # pygame.draw.rect(WIN, (255, 0, 0),asteroid, 2) # for debugging
+
+    # Render and display toolbar
     WIN.blit(TOOLBAR, (0, 0))
-    WIN.blit(BG, (0, 61))
 
     # Render and display destroyed missiles number
     if combo_missile_destroyed < 15:
@@ -133,11 +152,6 @@ def draw(player, elapsed_time, missiles, lasers, life_hearts, hit, combo_missile
     # Render and display elapsed time
     time_text = FONT.render(f"Time: {round(elapsed_time)}s", 1, "white")
     WIN.blit(time_text, (450, 8))
-
-    # Render and display the falling missiles
-    for missile in missiles:
-        WIN.blit(MISSILE, (missile.x, missile.y))
-        # pygame.draw.rect(WIN, (255, 0, 0), missile, 2) # for debugging
 
     # Render and display the shooting laser
     for laser in lasers:
@@ -193,7 +207,7 @@ def count_destroyed_missiles(last_minute, extra_points):
 
 def main():
 
-    global MISSILE_VEL
+    global MISSILE_VEL, ASTEROID_VEL
 
     run = True
 
@@ -206,32 +220,39 @@ def main():
     paused_time = 0
     pause_start = None
 
+    asteroid_count = 0
+    asteroid_add_increment = 3000
     missile_add_increment = 2000 # Starting respawn time gap of falling missiles
     missile_count = 0
     min_distance = MISSILE_WIDTH * 2
 
     lasers = []
+    asteroids = []
     missiles = []
-    life_hearts = 3
-    last_minute = 0
     extra_points = []
+    extra_life_hearts = []
+    
+    life_hearts = 3
+    
+    last_minute = 0
     total_extra_points = 0
-
     last_shot_time = 0
     last_crash_time = 0
-
     current_hit_time = 0
+    combo_missile_destroyed = 0
+    
     hit = False
     helper = False
-    combo_missile_destroyed = 0
+    activate_asteroids = False
     shield_enabled = False
     extra_life_heart_enabled = False
-    extra_life_hearts = []
 
     last_minute_increment = 1
 
     while run:
-        missile_count += clock.tick(60)
+        dt = clock.tick(60)   # milliseconds since last frame
+        missile_count += dt
+        asteroid_count += dt
         elapsed_time = time.time() - start_time - paused_time
 
         # Earn extra lifes
@@ -239,25 +260,44 @@ def main():
         if current_minute > last_minute:
             if life_hearts < 5:
                 life_hearts += 1
+                activate_asteroids = True
             last_minute = current_minute
 
-        if missile_count > missile_add_increment:
+        if activate_asteroids and asteroid_count > asteroid_add_increment:
+            if len(asteroids) < 2:
+                for _ in range(100):
+                    asteroid_x = random.randint(0, WIDTH - ASTEROID_WIDTH)
 
-            for _ in range(3):
-                attempts = 0
-                while attempts < 100:
-                    missile_x = random.randint(0, WIDTH - MISSILE_WIDTH)
-                    # Extract x-coordinates from existing missiles for distance check
-                    existing_x_coords = [m.x for m in missiles]
-                    # Check if this missile is far enough from all existing missiles
-                    if all(abs(missile_x - existing_x) >= min_distance for existing_x in existing_x_coords):
+                    # check spacing from existing asteroids + missiles
+                    if all(abs(asteroid_x - a[0].x) >= min_distance for a in asteroids) and \
+                    all(abs(asteroid_x - m.x) >= min_distance for m in missiles):
+                        asteroid = [pygame.Rect(asteroid_x, -ASTEROID_HEIGHT, ASTEROID_WIDTH, ASTEROID_HEIGHT), 10]
+                        asteroids.append(asteroid)
                         break
-                    attempts += 1
-                # If a valid position is found within the limit, create the missile
-                if attempts < 100:
-                    missile_x = max(10, min(missile_x, WIDTH - MISSILE_WIDTH - 10))
-                    missile = pygame.Rect(missile_x, 60, MISSILE_WIDTH, MISSILE_HEIGHT)
-                    missiles.append(missile)
+
+            asteroid_count = 0
+
+
+        if missile_count > missile_add_increment:
+            for _ in range(3):
+                for attempt in range(100):
+                    missile_x = random.randint(0, WIDTH - MISSILE_WIDTH)
+
+                    # Check spacing from existing missiles
+                    if all(abs(missile_x - m.x) >= min_distance for m in missiles):
+                        # Check vertical + horizontal space for asteroids
+                        safe_to_spawn = True
+                        for a in asteroids:
+                            rect, hp = a
+                            if rect.y + rect.height > -MISSILE_HEIGHT and \
+                            (missile_x + MISSILE_WIDTH > rect.x and missile_x < rect.x + ASTEROID_WIDTH):
+                                safe_to_spawn = False
+                                break
+
+                        if safe_to_spawn:
+                            missile = pygame.Rect(missile_x, -MISSILE_HEIGHT, MISSILE_WIDTH, MISSILE_HEIGHT)
+                            missiles.append(missile)
+                            break
 
             missile_add_increment = max(250, missile_add_increment - 30)
             missile_count = 0
@@ -320,7 +360,7 @@ def main():
                             COUNTDOWN_CHANNEL.play(countdown_sound)
                             WIN.blit(BG, (0, 61))
                             WIN.blit(TOOLBAR, (0, 0))
-                            draw(player, elapsed_time, missiles, lasers, life_hearts, hit, combo_missile_destroyed, shield_enabled, extra_life_hearts)
+                            draw(player, elapsed_time, asteroids, missiles, lasers, life_hearts, hit, combo_missile_destroyed, shield_enabled, extra_life_hearts)
                             
                             WIN.blit(text, (WIDTH / 2 - text.get_width() / 2, HEIGHT / 2 - text.get_height() / 2))
                             pygame.display.update()
@@ -328,6 +368,33 @@ def main():
                         paused_time += time.time() - pause_start
                         break
         
+        # Generate falling asteroids and remove them if crash into spaceship
+        for asteroid in asteroids[:]:
+            rect, hp = asteroid  # unpack
+            rect.y += ASTEROID_VEL  # move down
+
+            # remove if it goes off screen
+            if rect.y > HEIGHT:
+                asteroids.remove(asteroid)
+                continue
+
+            # collision with player
+            if rect.colliderect(player):
+                current_crash_time = time.time()
+                if current_crash_time - last_crash_time >= 1.5:
+                    if shield_enabled:
+                        shield_enabled = False
+                        DEACTIVATE_SHIELD_CHANNEL.play(deactivate_shield_sound)
+                    else:
+                        GETTING_HIT_CHANNEL.play(getting_hit_sound)
+                        life_hearts -= 1
+                        helper = False
+                        hit = True
+                        current_hit_time = time.time()
+                    combo_missile_destroyed = 0
+                    count_destroyed_missiles(last_minute, extra_points)
+                    last_crash_time = current_crash_time
+
         # Generate falling missiles and remove them if crash into spaceship
         for missile in missiles[:]:
             if current_minute > last_minute_increment:
@@ -360,7 +427,7 @@ def main():
             if time.time() - current_hit_time >= 0.5:  # remove hit image after half a second after a hit
                 hit = False
         
-        # Generate shooting laser and remove laser and missile if hit
+        # Generate shooting laser and remove laser and asteroid/missile if hit
         for laser in lasers[:]:
             laser.y -= LASER_VEL
             if laser.y <= 60:
@@ -368,6 +435,32 @@ def main():
                     lasers.remove(laser)
                 except ValueError:
                     pass
+
+            for asteroid in asteroids[:]:
+                rect, hp = asteroid
+                if laser.colliderect(rect):
+                    # reduce HP
+                    asteroid[1] -= 1
+
+                    if laser in lasers:
+                        lasers.remove(laser)
+
+                    DESTROY_ASTEROID_CHANNEL.play(destroy_missile_sound)
+                    # check if asteroid is destroyed
+                    if asteroid[1] <= 0:
+                        asteroids.remove(asteroid)
+                        combo_missile_destroyed += 3
+
+                    # optional: update combo, shield, helper as in your current code
+                    if combo_missile_destroyed == 15 and not helper:
+                        UPGRADE_CHANNEL.play(upgrade_sound)
+                    if combo_missile_destroyed >= 15:
+                        helper = True
+                    if combo_missile_destroyed >= 30 and not shield_enabled:
+                        shield_enabled = True
+                        ACTIVATE_SHIELD_CHANNEL.play(activate_shield_sound)
+
+                    break
                 
             for missile in missiles[:]:
                 if laser.colliderect(missile):
@@ -481,7 +574,7 @@ def main():
                 run = False
                 break
 
-        draw(player, elapsed_time, missiles, lasers, life_hearts, hit, combo_missile_destroyed, shield_enabled, extra_life_hearts)
+        draw(player, elapsed_time, asteroids, missiles, lasers, life_hearts, hit, combo_missile_destroyed, shield_enabled, extra_life_hearts)
 
     pygame.quit()
 
