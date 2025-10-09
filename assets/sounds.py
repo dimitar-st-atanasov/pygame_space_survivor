@@ -16,7 +16,7 @@ generate_heart = pygame.mixer.Sound("resources/sounds/generate_heart.wav")
 menu_song = pygame.mixer.Sound("resources/sounds/menu_song.wav")
 
 # Volume setup
-def set_default_volumes():
+def set_default_audio_volumes():
     shoot_single.set_volume(0.1)
     shoot_double.set_volume(0.1)
     destroy_missile.set_volume(1.0)
@@ -29,4 +29,7 @@ def set_default_volumes():
     game_over.set_volume(1.0)
     upgrade.set_volume(0.8)
     generate_heart.set_volume(0.7)
+
+# Music setup
+def set_default_music_volumes():
     menu_song.set_volume(1.0)

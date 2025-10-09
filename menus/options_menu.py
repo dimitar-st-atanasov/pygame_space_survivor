@@ -2,22 +2,22 @@ import pygame
 import constants
 from assets import images, sounds
 
-# Global toggles for audio and music
 audio_enabled = True
 music_enabled = True
 
 def show_options_menu():
     """Display the options menu and handle user input."""
     global audio_enabled, music_enabled
+    pygame.event.clear()
 
     options_menu = True
 
     while options_menu:
-        # Draw background and UI
+        # --- Draw background and UI ---
         constants.WIN.blit(constants.TOOLBAR, (0, 0))
         constants.WIN.blit(constants.BG, (0, 61))
 
-        # Draw buttons depending on toggle states
+        # Draw buttons for visuals (no return value needed)
         if audio_enabled:
             images.audio_button.draw(constants.WIN)
         else:
@@ -32,36 +32,34 @@ def show_options_menu():
 
         pygame.display.update()
 
-        # Event loop
+        # --- Event handling ---
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 return
 
-            # --- Audio toggle ---
-            if audio_enabled and images.audio_button.draw(constants.WIN):
-                _disable_audio()
-                audio_enabled = False
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                mouse_pos = pygame.mouse.get_pos()
 
-            elif not audio_enabled and images.red_audio_button.draw(constants.WIN):
-                _enable_audio()
-                audio_enabled = True
+                # Use the button's rect for collision
+                if audio_enabled and images.audio_button.rect.collidepoint(mouse_pos):
+                    audio_enabled = False
+                    _disable_audio()
+                elif not audio_enabled and images.red_audio_button.rect.collidepoint(mouse_pos):
+                    audio_enabled = True
+                    _enable_audio()
 
-            # --- Music toggle ---
-            if music_enabled and images.music_button.draw(constants.WIN):
-                sounds.menu_song.set_volume(0.0)
-                music_enabled = False
+                if music_enabled and images.music_button.rect.collidepoint(mouse_pos):
+                    music_enabled = False
+                    _disable_music()
+                elif not music_enabled and images.red_music_button.rect.collidepoint(mouse_pos):
+                    music_enabled = True
+                    _enable_music()
 
-            elif not music_enabled and images.red_music_button.draw(constants.WIN):
-                sounds.menu_song.set_volume(0.3)
-                music_enabled = True
-
-            # --- Back button ---
-            if images.back_button.draw(constants.WIN):
-                options_menu = False
+                if images.back_button.rect.collidepoint(mouse_pos):
+                    return "back"
 
 
-# --- Helper functions ---
 
 def _disable_audio():
     """Mute all sound effects."""
@@ -81,7 +79,14 @@ def _disable_audio():
     ]:
         snd.set_volume(0.0)
 
-
 def _enable_audio():
     """Restore sound effect volumes to defaults."""
-    sounds.set_default_volumes()
+    sounds.set_default_audio_volumes()
+
+def _disable_music():
+    """Mute background music."""
+    sounds.menu_song.set_volume(0.0)
+
+def _enable_music():
+    """Restore music volumes to defaults."""
+    sounds.set_default_music_volumes()

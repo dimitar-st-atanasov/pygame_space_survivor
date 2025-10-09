@@ -1,16 +1,14 @@
+import sys
 import pygame
 import constants
 from assets import images, sounds
-from .options_menu import show_options_menu
-
-run = False
 
 def show_start_menu():
-    global run
-    start_menu = True
+    pygame.event.clear()
     constants.MENU_SONG_CHANNEL.play(sounds.menu_song, loops=-1)
-    
-    while start_menu:
+
+    while True:
+        # draw buttons
         constants.WIN.blit(constants.TOOLBAR, (0, 0))
         constants.WIN.blit(constants.BG, (0, 61))
         images.play_button.draw(constants.WIN)
@@ -21,11 +19,15 @@ def show_start_menu():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
-
-            if images.play_button.draw(constants.WIN):
-                constants.MENU_SONG_CHANNEL.stop()
-                run = True
-                start_menu = False
-
-            if images.options_button.draw(constants.WIN):
-                show_options_menu()
+                sys.exit()
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                pos = pygame.mouse.get_pos()
+                if images.play_button.rect.collidepoint(pos):
+                    constants.MENU_SONG_CHANNEL.stop()
+                    return "play"
+                elif images.options_button.rect.collidepoint(pos):
+                    constants.MENU_SONG_CHANNEL.stop()
+                    return "options"  # do not call options here
+                elif images.quit_button.rect.collidepoint(pos):
+                    constants.MENU_SONG_CHANNEL.stop()
+                    return "quit"

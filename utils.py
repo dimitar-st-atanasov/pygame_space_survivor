@@ -277,41 +277,46 @@ def handle_laser_missile_collisions(lasers, missiles, combo_missile_destroyed, h
     return lasers, missiles, combo_missile_destroyed, helper, shield_enabled, extra_life_heart_enabled
 
 
-def pause_game(player, elapsed_time, asteroids, missiles, lasers, life_hearts, hit, combo_missile_destroyed, shield_enabled, extra_life_hearts):
+def pause_game(player, elapsed_time, asteroids, missiles, lasers,
+               life_hearts, hit, combo_missile_destroyed,
+               shield_enabled, extra_life_hearts):
     """
-    Pauses the game, shows menu buttons, and resumes with a 3-2-1 countdown.
-    Returns the time spent paused to adjust elapsed_time in main().
+    Pauses the game and shows a pause menu with Resume, Options, and Quit.
+    Returns one of: "resume", "options", "quit".
     """
-    pause_start = time.time()
-    pause = True  # local variable
     constants.MENU_SONG_CHANNEL.play(sounds.menu_song, loops=-1)
+    paused = True
 
-    # Draw pause buttons once
-    images.resume_button.draw(constants.WIN)
-    images.options_button.draw(constants.WIN)
-    images.quit_button.draw(constants.WIN)
-    pygame.display.update()
+    while paused:
+        constants.WIN.blit(constants.BG, (0, 61))
+        constants.WIN.blit(constants.TOOLBAR, (0, 0))
+        draw(player, elapsed_time, asteroids, missiles, lasers,
+             life_hearts, hit, combo_missile_destroyed,
+             shield_enabled, extra_life_hearts)
 
-    # Clear the event queue
-    pygame.event.get()
+        resume_clicked = images.resume_button.draw(constants.WIN)
+        options_clicked = images.options_button.draw(constants.WIN)
+        quit_clicked = images.quit_button.draw(constants.WIN)
 
-    while pause:
+        pygame.display.update()
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
-                exit()
+                return "quit"
 
-        # Check resume button
-        if images.resume_button.draw(constants.WIN):
+        # --- Handle button clicks ---
+        if resume_clicked:
             constants.MENU_SONG_CHANNEL.stop()
-            pause = False
-
-            # Countdown before resuming
-            for _, text in zip(range(3, 0, -1), [texts.three_text, texts.two_text, texts.one_text]):
+            # 3-2-1 countdown before resuming
+            for _, text in zip(range(3, 0, -1),
+                               [texts.three_text, texts.two_text, texts.one_text]):
                 constants.COUNTDOWN_CHANNEL.play(sounds.countdown)
                 constants.WIN.blit(constants.BG, (0, 61))
                 constants.WIN.blit(constants.TOOLBAR, (0, 0))
-                draw(player, elapsed_time, asteroids, missiles, lasers, life_hearts, hit, combo_missile_destroyed, shield_enabled, extra_life_hearts)
+                draw(player, elapsed_time, asteroids, missiles, lasers,
+                     life_hearts, hit, combo_missile_destroyed,
+                     shield_enabled, extra_life_hearts)
                 constants.WIN.blit(
                     text,
                     (constants.WIDTH / 2 - text.get_width() / 2,
@@ -320,15 +325,17 @@ def pause_game(player, elapsed_time, asteroids, missiles, lasers, life_hearts, h
                 pygame.display.update()
                 pygame.time.delay(1000)
 
-            paused_time = time.time() - pause_start
-            return paused_time  # return the pause duration to main()
+            return "resume"
 
-        # Check quit button
-        if images.quit_button.draw(constants.WIN):
-            pygame.quit()
-            exit()
+        elif options_clicked:
+            constants.MENU_SONG_CHANNEL.stop()
+            return "options"
 
-        pygame.time.delay(50)  # small delay to avoid high CPU usage
+        elif quit_clicked:
+            constants.MENU_SONG_CHANNEL.stop()
+            return "quit"
+
+        pygame.time.delay(50)
 
 
 def game_over_animation(player, elapsed_time, extra_points):
